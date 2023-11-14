@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "orakle-amm"
+version = "0.1.0"
+description = ""
+authors = ["kosunghun317 <kosunghun317@kaist.ac.kr>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+python-dotenv = "^1.0.0"
+ipykernel = "^6.26.0"
+black = {extras = ["jupyter"], version = "^23.11.0"}
+web3 = "^6.11.3"
+vyper = "^0.3.10"
+eth-ape = "^0.6.24"
+polars = {extras = ["all"], version = "^0.19.13"}
+matplotlib = "^3.8.1"
+ing-theme-matplotlib = "^0.1.8"
+seaborn = "^0.13.0"
+numba = "^0.58.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

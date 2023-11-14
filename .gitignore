@@ -1,0 +1,4 @@
+data/cex_price/raw/
+references/
+.venv/
+__pycache__/
