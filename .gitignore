@@ -2,3 +2,5 @@ __pycache__/
 .venv/
 references/
 data/cex_price/raw/
+.env
+poetry.lock
