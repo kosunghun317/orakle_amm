@@ -38,14 +38,18 @@ def create_sample_df(sigma_per_day, blocks_per_day, M, num_days, initial_price=1
     all_prices = get_price_path(
         sigma_per_day, blocks_per_day, M, num_days, initial_price
     )
-
+    
+    blocks_df = pd.read_csv("data/blocks/timestamp_blockNumber_baseFeePerGas.csv")
+    cex_prices_df = pd.read_csv("data/cex_price/ETHUSDC-1s-2023-10-opens.csv")
+    df = blocks_df
+    df = pd.merge(df, cex_prices_df, on="timestamp", how="left")
     # Generate time axis
-    num_block = np.arange(all_prices.shape[0]) * 1
+    num_block = np.arange(df.shape[0]) * 1
 
     df = pd.DataFrame(
         {
-            "num_block": num_block,  # num_block을 1차원 배열로 변환
-            "all_price": all_prices,  # all_prices를 1차원 배열로 변환
+            "num_block": df['blockNumber'],  # num_block을 1차원 배열로 변환
+            "all_price": df['price'],  # all_prices를 1차원 배열로 변환
         }
     )
 
