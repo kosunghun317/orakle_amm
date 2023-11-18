@@ -4,3 +4,4 @@ references/
 data/cex_price/raw/
 .env
 poetry.lock
+**/.DS_Store
