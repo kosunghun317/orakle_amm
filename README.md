@@ -1,4 +1,9 @@
 # orakle_amm
-ORAKLE AMM Team Project: Quantification &amp; Mitigation of LVR
 
-test
+ORAKLE AMM Team Project: Quantification & Mitigation of LVR.
+
+We measured historical LVR and other metrics which were defined and predicted in two seminal papers (https://arxiv.org/pdf/2208.06046.pdf, https://arxiv.org/pdf/2305.14604.pdf) written by J. Milionis et al.. Clearly, the real world data has slight difference from theoretical predictions. We analyze the reasons.
+
+Moreover, we listed and compared upcoming new DEX designs to mitigate the LVR.
+
+Lastly, we suggested our own LVR mitigating design, assuming the existence of intense competition between arbitrageurs. We demonstrated its performance within historical price data simulation.

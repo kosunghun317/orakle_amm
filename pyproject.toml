@@ -18,6 +18,8 @@ matplotlib = "^3.8.1"
 ing-theme-matplotlib = "^0.1.8"
 seaborn = "^0.13.0"
 numba = "^0.58.1"
+slither-analyzer = "^0.10.0"
+maturin = "^1.4.0"
 
 
 [build-system]

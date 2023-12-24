@@ -1,7 +1,12 @@
 __pycache__/
 .venv/
-references/
 data/cex_price/raw/
 .env
 poetry.lock
-**/.DS_Store
+.python-version
+new_amm/.build/
+references/
+**/.cryo/
+scripts/
+tests/
+.build/
