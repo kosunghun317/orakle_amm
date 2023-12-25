@@ -114,7 +114,6 @@ def analyze_v3_data(network, dex, base_token, quote_token, fee, use_instant_vola
     ############################################################
     #                     Historical Data                      #
     ############################################################
-    
 
 
 if __name__ == "__main__":

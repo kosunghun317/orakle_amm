@@ -139,12 +139,10 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
             + blocks_price_events["quoteIn"]
         )
     )  # Fee income
-    if (
-        token_to_ticker(base_token) == "ETH"
-    ):
+    if token_to_ticker(base_token) == "ETH":
         """
         (potential) arbitrage profit after swap fee and gas cost.
-        gas fee 140k (120k for V3) is selected from 5% percentile of gas 
+        gas fee 140k (120k for V3) is selected from 5% percentile of gas
         cost distribution, assuming that the arbitrageurs optimized their codes.
         See https://twitter.com/atiselsts_eth/status/1719693946375258507
         """
@@ -164,6 +162,9 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
         )
 
     arbitrages = blocks_price_events[blocks_price_events["ARB"] > 0]
+    percentile_limit = (
+        arbitrages["ARB"] / (arbitrages["preARBperVP"] * arbitrages["poolValue"])
+    ).quantile(0.99) # filter the outliers; mostly part of sandwich attack.
 
 
 if __name__ == "__main__":
