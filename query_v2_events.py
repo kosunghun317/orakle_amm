@@ -207,6 +207,26 @@ def query_v2_events(
     df["quoteReserve"] /= Decimal(10**quote_decimals)
     df["totalSupply"] /= Decimal(10 ** int((base_decimals + quote_decimals) / 2))
 
+    # trim the rows
+    print("Trimming the rows..")
+    df.reset_index(inplace=True, drop=True)
+
+    for i in range(1, len(df)):
+        if df.at[i, "quoteReserve"] == Decimal(0):
+            df.at[i, "quoteReserve"] = df.at[i - 1, "quoteReserve"]
+        if df.at[i, "baseReserve"] == Decimal(0):
+            df.at[i, "baseReserve"] = df.at[i - 1, "baseReserve"]
+        if df.at[i, "totalSupply"] == Decimal(0):
+            df.at[i, "totalSupply"] = df.at[i - 1, "totalSupply"]
+
+    df = df[
+        (df["quoteIn"] != Decimal(0))
+        | (df["baseIn"] != Decimal(0))
+        | (df["quoteOut"] != Decimal(0))
+        | (df["baseOut"] != Decimal(0))
+    ]
+    df.reset_index(inplace=True, drop=True)
+
     # save into csv file
     print("Saving into csv file..")
     df.to_csv(
@@ -218,10 +238,10 @@ def query_v2_events(
 if __name__ == "__main__":
     start_timestamp = int(datetime(2023, 10, 1, tzinfo=timezone.utc).timestamp())
     end_timestamp = int(datetime(2023, 12, 1, tzinfo=timezone.utc).timestamp())
-    network = "MAINNET"
-    dex = "UNI_V2"
+    network = "ARBITRUM"
+    dex = "SUSHI"
     base_token = "WETH"
-    quote_token = "USDC"
+    quote_token = "USDCe"
     print("Start!")
     start_time = time.perf_counter()
     query_v2_events(

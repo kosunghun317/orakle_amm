@@ -134,7 +134,7 @@ if __name__ == "__main__":
     network = "ARBITRUM"
     dex = "UNI_V3"
     base_token = "WETH"
-    quote_token = "USDC"
+    quote_token = "USDCe"
     fee_rate = 500
     print("Start!")
     start_time = time.perf_counter()

@@ -11,118 +11,159 @@ import pandas as pd
 import polars as pl
 import numpy as np
 from utils import *
+import matplotlib.pyplot as plt
 
 load_dotenv()
 
 
 def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_volatility):
     """
-    Calculate the theoretical predictions, compare with historical data.
+    Read files, compute the parameters, theoretical predictions, then
+    compare them against realized data.
     """
+    ############################################################
+    #                        read files                        #
+    ############################################################
 
-    #################### read files ####################
     events_df = pd.read_csv(
         f"data/onchain_events/{network}_{dex}_{base_token}_{quote_token}_events.csv"
     )
-    blocks_df = pd.read_csv("data/blocks/blockNumber_timestamp_baseFeePerGas.csv")
+    blocks_df = pd.read_csv(
+        f"data/{network}_blocks/blockNumber_timestamp_baseFeePerGas.csv"
+    )
     cex_price_df = pd.read_csv(
         f"data/cex_price/{token_to_ticker(base_token)}{token_to_ticker(quote_token)}_total.csv"
     )
-
-    #################### bind the price data to each block ####################
     """
-    We will refer the price 4 seconds before the block timestamp. 
+    For the case of Mainnet, we will refer the price 4 seconds before the block timestamp. 
     This is when the block building auction ends usually.
-    It turned out that arbitrageurs get maximal profit if they execute the order at that moment.
-    See https://ethresear.ch/t/empirical-analysis-of-cross-domain-cex-dex-arbitrage-on-ethereum/17620
+    It is also turned out that arbitrageurs get maximal profit if they execute 
+    the order at that moment. See 
+    https://ethresear.ch/t/empirical-analysis-of-cross-domain-cex-dex-arbitrage-on-ethereum/17620
     """
-    cex_price_df["refPrice"] = cex_price_df["price"].shift(4)
-    blocks_price = pd.merge(blocks_df, cex_price_df, on="timestamp", how="left")
+    if network == "MAINNET":
+        cex_price_df["price"] = cex_price_df["price"].shift(4)
 
-    # estimating volatility is tricky part, so we use one of following:
-    if use_instant_volatility:
+    ############################################################
+    #                    compute parameters                    #
+    ############################################################
+
+    if use_instant_volatility:  # volatility.
         """
-        Instantaneous volatility from 1-minute return.
+        Instantaneous volatility from 1 minute return.
         For the derivation see https://blog.naver.com/chunjein/100209878606
         """
-        blocks_price["VolSquared"] = (
+        cex_price_df["volSquared"] = (
             2
             * (
-                (blocks_price["refPrice"] - blocks_price["refPrice"].shift(5))
-                / blocks_price["refPrice"].shift(5)
-                - np.log(blocks_price["refPrice"] / blocks_price["refPrice"].shift(5))
-            )  # difference in arithmetic and logarithmic (approx.) 1 minute return
+                (cex_price_df["price"] - cex_price_df["price"].shift(60))
+                / cex_price_df["price"].shift(60)
+                - np.log(cex_price_df["price"] / cex_price_df["price"].shift(60))
+            )  # difference in arithmetic and logarithmic 1 minute return
             * (60 * 60 * 24)
-            / (blocks_price["timestamp"] - blocks_price["timestamp"].shift(5))
-        )  # converted to daily volatility.
+            / (cex_price_df["timestamp"] - cex_price_df["timestamp"].shift(60))
+        )  # converted to daily timeframe.
     else:
         """
-        Rolling volatility from 1-minute return.
-        We use 1 hour rolling window. Can be freely modified.
+        Rolling volatility from 1 minute return.
+        We use 10 minutes rolling window. Can be freely modified.
         """
-        blocks_price["VolSquared"] = (
+        cex_price_df["volSquared"] = (
             np.log(
-                blocks_price["refPrice"] / blocks_price["refPrice"].shift(5)
+                cex_price_df["price"] / cex_price_df["price"].shift(60)
             )  # (approx.) 1 minute return
-            .rolling(window=5 * 60)  # samples within (approx.) 1 hour
+            .rolling(window=60 * 10)  # samples within 10 minutes
             .std()
             ** 2
             * 60
             * 24
-        )  # converted to daily volatility.
+        )  # converted to daily timeframe.
+    cex_price_df.fillna(0, inplace=True)
 
-    # parameter lambda from MMR23 paper.
-    blocks_price["lambda"] = (
-        60 * 60 * 24 / (blocks_price["timestamp"] - blocks_price["timestamp"].shift(1))
-    )
-
-    # fee rate.
-    gamma = np.log(1 + fee / 10000)
-
-    # composite parameter from MMR23 paper.
+    blocks_price = pd.merge(blocks_df, cex_price_df, on="timestamp", how="left")
+    blocks_price["lambda"] = (60 * 60 * 24) * len(blocks_df) / len(cex_price_df)
+    """
+    ^-------parameter lambda for Poisson process, which can be thought 
+    as inverse of mean block time normalized in daily time.
+    """
+    gamma = np.log(1 + fee / 10000)  # fee rate.
     blocks_price["eta"] = (
         np.sqrt(2 * blocks_price["lambda"])
         * gamma
-        / np.sqrt(blocks_price["VolSquared"])
-    )
-
-    # theoretical prediction from MMR23 paper.
+        / np.sqrt(blocks_price["volSquared"])
+    )  # composite parameter.
     blocks_price["tradeProbability"] = 1 / (1 + blocks_price["eta"])
 
-    #################### construct the main DF we will work with ####################
-    events_blocks_price = pd.merge(
-        events_df, blocks_price, on="blockNumber", how="right"
+    ############################################################
+    #                       Predictions                        #
+    ############################################################
+
+    blocks_price["preLVRperVP"] = blocks_price["volSquared"] / 8  # from MMRZ23
+    blocks_price["preARBperVP"] = (
+        blocks_price["volSquared"]
+        * blocks_price["tradeProbability"]
+        * (
+            (np.exp(gamma / 2) + np.exp(-gamma / 2))
+            / (2 * (1 - blocks_price["volSquared"] / (8 * blocks_price["lambda"])))
+        )
+        / 8
+    )  # from MMR23
+    blocks_price["preFEEperVP"] = (
+        blocks_price["preLVRperVP"] - blocks_price["preARBperVP"]
+    )  # from MMRZ22
+
+    ############################################################
+    #                     Historical Data                      #
+    ############################################################
+
+    blocks_price_events = pd.merge(
+        blocks_price, events_df, on="blockNumber", how="outer"
     )
-
-    # fill NaNs, and trim the columns
-    events_blocks_price.fillna(0, inplace=True)
-    for i in range(1, len(events_blocks_price)):
-        if events_blocks_price.at[i, "quoteReserve"] == 0.0:
-            events_blocks_price.at[i, "quoteReserve"] = events_blocks_price.at[
-                i - 1, "quoteReserve"
-            ]
-        if events_blocks_price.at[i, "baseReserve"] == 0.0:
-            events_blocks_price.at[i, "baseReserve"] = events_blocks_price.at[
-                i - 1, "baseReserve"
-            ]
-        if events_blocks_price.at[i, "totalSupply"] == 0.0:
-            events_blocks_price.at[i, "totalSupply"] = events_blocks_price.at[
-                i - 1, "totalSupply"
-            ]
-
-    #################### historical data ####################
-
-    # amm spot price
-    events_blocks_price["ammPrice"] = (
-        events_blocks_price["quoteReserve"] / events_blocks_price["baseReserve"]
+    blocks_price_events.fillna(0, inplace=True)
+    blocks_price_events["poolValue"] = (
+        blocks_price_events["baseReserve"] * blocks_price_events["price"]
+        + blocks_price_events["quoteReserve"]
     )
+    blocks_price_events["LVR"] = -(10000 - fee) / 10000 * (
+        blocks_price_events["baseIn"] * blocks_price_events["price"]
+        + blocks_price_events["quoteIn"]
+    ) + (
+        blocks_price_events["baseOut"] * blocks_price_events["price"]
+        + blocks_price_events["quoteOut"]
+    )  # LVR, which is equal to trader's PnL without swap fee and gas cost
+    blocks_price_events["FEE"] = (
+        fee
+        / 10000
+        * (
+            blocks_price_events["baseIn"] * blocks_price_events["price"]
+            + blocks_price_events["quoteIn"]
+        )
+    )  # Fee income
+    if (
+        token_to_ticker(base_token) == "ETH"
+    ):
+        """
+        (potential) arbitrage profit after swap fee and gas cost.
+        gas fee 140k (120k for V3) is selected from 5% percentile of gas 
+        cost distribution, assuming that the arbitrageurs optimized their codes.
+        See https://twitter.com/atiselsts_eth/status/1719693946375258507
+        """
+        blocks_price_events["ARB"] = (
+            blocks_price_events["LVR"]
+            - blocks_price_events["FEE"]
+            - blocks_price_events["baseFeePerGas"]
+            * 140000
+            / 10**18
+            * blocks_price_events["price"]
+        )
+    else:
+        blocks_price_events["ARB"] = (
+            blocks_price_events["LVR"]
+            - blocks_price_events["FEE"]
+            - blocks_price_events["baseFeePerGas"] * 140000 / 10**18
+        )
 
-    # mispricing
-    events_blocks_price["misPricing"] = np.log(
-        events_blocks_price["price"] / events_blocks_price["ammPrice"]
-    )
-
-    # ...
+    arbitrages = blocks_price_events[blocks_price_events["ARB"] > 0]
 
 
 if __name__ == "__main__":
