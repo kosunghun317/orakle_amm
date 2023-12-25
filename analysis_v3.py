@@ -27,6 +27,7 @@ def analyze_v3_data(network, dex, base_token, quote_token, fee, use_instant_vola
     events_df = pd.read_csv(
         f"data/onchain_events/{network}_{dex}_{base_token}_{quote_token}_events.csv"
     )
+    events_df.rename({'price': 'ammPrice'}, inplace=True)
     blocks_df = pd.read_csv(
         f"data/{network}_blocks/blockNumber_timestamp_baseFeePerGas.csv"
     )
@@ -114,7 +115,47 @@ def analyze_v3_data(network, dex, base_token, quote_token, fee, use_instant_vola
     ############################################################
     #                     Historical Data                      #
     ############################################################
+    blocks_price_events = pd.merge(
+        blocks_price, events_df, on='blockNumber', how='left'
+    )
+    blocks_price_events.fillna(0, inplace=True)
 
+    blocks_price_events["poolValue"] = 2 * np.sqrt(blocks_price_events["ammPrice"]) * blocks_price_events["liquidity"]
+    blocks_price_events["LVR"] = -(10000 - fee) / 10000 * (blocks_price_events["baseAmount"].clip(lower=0.0) *blocks_price_events["price"]+ blocks_price_events["quoteAmount"].clip(lower=0.0)) - (
+        blocks_price_events["baseAmount"].clip(upper=0.0) * blocks_price_events["price"]
+        + blocks_price_events["quoteAmount"].clip(upper=0.0)
+    )  # LVR, which is equal to trader's PnL without swap fee and gas cost
+    blocks_price_events["FEE"] = (
+        fee
+        / 10000
+        * (
+            blocks_price_events["baseAmount"].clip(lower=0.0) * blocks_price_events["price"]
+        + blocks_price_events["quoteAmount"].clip(lower=0.0)
+        )
+    )  # Fee income
+    if token_to_ticker(base_token) == "ETH":
+        """
+        (potential) arbitrage profit after swap fee and gas cost.
+        gas fee 140k (120k for V3) is selected from 5% percentile of gas
+        cost distribution, assuming that the arbitrageurs optimized their codes.
+        See https://twitter.com/atiselsts_eth/status/1719693946375258507
+        """
+        blocks_price_events["ARB"] = (
+            blocks_price_events["LVR"]
+            - blocks_price_events["FEE"]
+            - blocks_price_events["baseFeePerGas"]
+            * 120000
+            / 10**18
+            * blocks_price_events["price"]
+        )
+    else:
+        blocks_price_events["ARB"] = (
+            blocks_price_events["LVR"]
+            - blocks_price_events["FEE"]
+            - blocks_price_events["baseFeePerGas"] * 140000 / 10**18
+        )
+    
+    arbitrages = blocks_price_events[blocks_price_events["ARB"] > 0]
 
 if __name__ == "__main__":
     network = "MAINNET"

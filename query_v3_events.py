@@ -38,10 +38,11 @@ def query_v3_events(
     chunk_size = 1800
     swaps = []
     for block_number in range(from_block, to_block, chunk_size):
+        chunk_end = min(block_number + chunk_size, to_block) - 1
         time.sleep(0.1)
 
         swap_logs = pool.events.Swap().get_logs(
-            fromBlock=block_number, toBlock=block_number + chunk_size - 1
+            fromBlock=block_number, toBlock=chunk_end
         )
         swaps.extend(
             [
@@ -131,11 +132,11 @@ def query_v3_events(
 if __name__ == "__main__":
     start_timestamp = int(datetime(2023, 10, 1, tzinfo=timezone.utc).timestamp())
     end_timestamp = int(datetime(2023, 12, 1, tzinfo=timezone.utc).timestamp())
-    network = "ARBITRUM"
+    network = "MAINNET"
     dex = "UNI_V3"
     base_token = "WETH"
-    quote_token = "USDCe"
-    fee_rate = 500
+    quote_token = "USDC"
+    fee_rate = 10000
     print("Start!")
     start_time = time.perf_counter()
     query_v3_events(
