@@ -164,7 +164,9 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
     arbitrages = blocks_price_events[blocks_price_events["ARB"] > 0]
     percentile_limit = (
         arbitrages["ARB"] / (arbitrages["preARBperVP"] * arbitrages["poolValue"])
-    ).quantile(0.99) # filter the outliers; mostly part of sandwich attack.
+    ).quantile(
+        0.99
+    )  # filter the outliers; mostly part of sandwich attack.
 
 
 if __name__ == "__main__":

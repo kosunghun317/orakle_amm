@@ -238,10 +238,10 @@ def query_v2_events(
 if __name__ == "__main__":
     start_timestamp = int(datetime(2023, 10, 1, tzinfo=timezone.utc).timestamp())
     end_timestamp = int(datetime(2023, 12, 1, tzinfo=timezone.utc).timestamp())
-    network = "ARBITRUM"
+    network = "MAINNET"
     dex = "SUSHI"
     base_token = "WETH"
-    quote_token = "USDCe"
+    quote_token = "WBTC"
     print("Start!")
     start_time = time.perf_counter()
     query_v2_events(

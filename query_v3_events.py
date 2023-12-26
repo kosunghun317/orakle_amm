@@ -135,7 +135,7 @@ if __name__ == "__main__":
     network = "MAINNET"
     dex = "UNI_V3"
     base_token = "WETH"
-    quote_token = "USDC"
+    quote_token = "WBTC"
     fee_rate = 10000
     print("Start!")
     start_time = time.perf_counter()
