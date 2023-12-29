@@ -132,14 +132,21 @@ def query_v3_events(
 if __name__ == "__main__":
     start_timestamp = int(datetime(2023, 10, 1, tzinfo=timezone.utc).timestamp())
     end_timestamp = int(datetime(2023, 12, 1, tzinfo=timezone.utc).timestamp())
-    network = "MAINNET"
+    network = "ARBITRUM"
     dex = "UNI_V3"
     base_token = "WETH"
     quote_token = "WBTC"
-    fee_rate = 10000
-    print("Start!")
-    start_time = time.perf_counter()
-    query_v3_events(
-        start_timestamp, end_timestamp, network, dex, base_token, quote_token, fee_rate
-    )
-    print(f"End! It took {int(time.perf_counter() - start_time)} seconds.")
+    fee_rates = [500, 3000, 10000]
+    for fee_rate in fee_rates:
+        print("Start!")
+        start_time = time.perf_counter()
+        query_v3_events(
+            start_timestamp,
+            end_timestamp,
+            network,
+            dex,
+            base_token,
+            quote_token,
+            fee_rate,
+        )
+        print(f"End! It took {int(time.perf_counter() - start_time)} seconds.")

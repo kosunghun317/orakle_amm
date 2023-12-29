@@ -60,8 +60,8 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
                 / cex_price_df["price"].shift(60)
                 - np.log(cex_price_df["price"] / cex_price_df["price"].shift(60))
             )  # difference in arithmetic and logarithmic 1 minute return
-            * (60 * 60 * 24)
-            / (cex_price_df["timestamp"] - cex_price_df["timestamp"].shift(60))
+            * 60
+            * 24
         )  # converted to daily timeframe.
     else:
         """
@@ -98,8 +98,8 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
     #                       Predictions                        #
     ############################################################
 
-    blocks_price["preLVRperVP"] = blocks_price["volSquared"] / 8  # from MMRZ23
-    blocks_price["preARBperVP"] = (
+    blocks_price["expLVRperPoolValue"] = blocks_price["volSquared"] / 8  # from MMRZ22
+    blocks_price["expARBperPoolValue"] = (
         blocks_price["volSquared"]
         * blocks_price["tradeProbability"]
         * (
@@ -108,8 +108,8 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
         )
         / 8
     )  # from MMR23
-    blocks_price["preFEEperVP"] = (
-        blocks_price["preLVRperVP"] - blocks_price["preARBperVP"]
+    blocks_price["expFEEperPoolValue"] = (
+        blocks_price["expLVRperPoolValue"] - blocks_price["expARBperPoolValue"]
     )  # from MMRZ22
 
     ############################################################
@@ -163,7 +163,7 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
 
     arbitrages = blocks_price_events[blocks_price_events["ARB"] > 0]
     percentile_limit = (
-        arbitrages["ARB"] / (arbitrages["preARBperVP"] * arbitrages["poolValue"])
+        arbitrages["ARB"] / (arbitrages["expARBperPoolValue"] * arbitrages["poolValue"])
     ).quantile(
         0.99
     )  # filter the outliers; mostly part of sandwich attack.
