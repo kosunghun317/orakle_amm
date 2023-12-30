@@ -163,10 +163,39 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
 
     arbitrages = blocks_price_events[blocks_price_events["ARB"] > 0]
     percentile_limit = (
-        arbitrages["ARB"] / (arbitrages["expARBperPoolValue"] * arbitrages["poolValue"])
+        (arbitrages["LVR"] - arbitrages["FEE"])
+        / (arbitrages["expARBperPoolValue"] * arbitrages["poolValue"])
     ).quantile(
         0.99
     )  # filter the outliers; mostly part of sandwich attack.
+    filtered_arbitrages = arbitrages[
+        (arbitrages["LVR"] - arbitrages["FEE"])
+        / (arbitrages["expARBperPoolValue"] * arbitrages["poolValue"])
+        <= percentile_limit
+    ]
+
+    """plt.figure(figsize=(10, 6))
+    plt.scatter(filtered_arbitrages['baseFeePerGas']/filtered_arbitrages['poolValue'],(filtered_arbitrages['LVR'] - filtered_arbitrages['FEE']) / (filtered_arbitrages["expARBperPoolValue"] * filtered_arbitrages["poolValue"]))
+
+    # Label the axes
+    plt.xlabel('baseFeePerGas / poolValue')
+    plt.ylabel('(LVR - FEE) / (expARBperPoolValue * poolValue)')
+
+    # Show the plot
+    plt.show()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(
+        blocks_price_events['blockNumber'],
+        ((blocks_price_events['FEE'] - blocks_price_events['LVR']) / blocks_price_events['totalSupply']).cumsum()
+    )
+
+    # Label the axes
+    plt.xlabel('blockNumber')
+    plt.ylabel('(FEE - LVR) per unit LP token')
+
+    # Show the plot
+    plt.show()"""
 
 
 if __name__ == "__main__":

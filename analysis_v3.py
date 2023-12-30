@@ -11,6 +11,7 @@ import pandas as pd
 import polars as pl
 import numpy as np
 from utils import *
+import matplotlib.pyplot as plt
 
 load_dotenv()
 
@@ -27,7 +28,7 @@ def analyze_v3_data(network, dex, base_token, quote_token, fee, use_instant_vola
     events_df = pd.read_csv(
         f"data/onchain_events/{network}_{dex}_{base_token}_{quote_token}_{fee}bps_events.csv"
     )
-    events_df.rename({"price": "ammPrice"}, inplace=True)
+    events_df.rename(columns={"price": "ammPrice"}, inplace=True)
     blocks_df = pd.read_csv(
         f"data/{network}_blocks/blockNumber_timestamp_baseFeePerGas.csv"
     )
@@ -163,10 +164,39 @@ def analyze_v3_data(network, dex, base_token, quote_token, fee, use_instant_vola
 
     arbitrages = blocks_price_events[blocks_price_events["ARB"] > 0]
     percentile_limit = (
-        arbitrages["ARB"] / (arbitrages["expARBperPoolValue"] * arbitrages["poolValue"])
+        (arbitrages["LVR"] - arbitrages["FEE"])
+        / (arbitrages["expARBperPoolValue"] * arbitrages["poolValue"])
     ).quantile(
         0.99
     )  # filter the outliers; mostly part of sandwich attack.
+    filtered_arbitrages = arbitrages[
+        (arbitrages["LVR"] - arbitrages["FEE"])
+        / (arbitrages["expARBperPoolValue"] * arbitrages["poolValue"])
+        <= percentile_limit
+    ]
+
+    """plt.figure(figsize=(10, 6))
+    plt.scatter(filtered_arbitrages['baseFeePerGas']/filtered_arbitrages['poolValue'],(filtered_arbitrages['LVR'] - filtered_arbitrages['FEE']) / (filtered_arbitrages["expARBperPoolValue"] * filtered_arbitrages["poolValue"]))
+
+    # Label the axes
+    plt.xlabel('baseFeePerGas / poolValue')
+    plt.ylabel('(LVR - FEE) / (expARBperPoolValue * poolValue)')
+
+    # Show the plot
+    plt.show()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(
+        blocks_price_events['blockNumber'],
+        ((blocks_price_events['FEE'] - blocks_price_events['LVR']) / blocks_price_events['liquidity']).cumsum()
+    )
+
+    # Label the axes
+    plt.xlabel('blockNumber')
+    plt.ylabel('(FEE - LVR) per unit liquidity')
+
+    # Show the plot
+    plt.show()"""
 
 
 if __name__ == "__main__":

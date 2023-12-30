@@ -241,7 +241,7 @@ if __name__ == "__main__":
     network = "ARBITRUM"
     dex = "CAMELOT"
     base_token = "WETH"
-    quote_token = "USDC"  # USDC, (USDCe), USDT, DAI, WBTC
+    quote_token = "WBTC"  # USDC, (USDCe), USDT, DAI, WBTC
     print("Start!")
     start_time = time.perf_counter()
     query_v2_events(
