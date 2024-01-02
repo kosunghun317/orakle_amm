@@ -51,7 +51,7 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
     if use_instant_volatility:  # volatility.
         """
         Instantaneous volatility from 1 minute return.
-        For the derivation see https://blog.naver.com/chunjein/100209878606
+        For the derivation see http://dx.doi.org/10.3905/jpm.1994.409478
         """
         cex_price_df["volSquared"] = (
             2
@@ -98,19 +98,24 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
     #                       Predictions                        #
     ############################################################
 
-    blocks_price["expLVRperPoolValue"] = blocks_price["volSquared"] / 8  # from MMRZ22
-    blocks_price["expARBperPoolValue"] = (
-        blocks_price["volSquared"]
+    blocks_price["instLVRperPoolValue"] = (
+        blocks_price["volSquared"] / 8 / blocks_price["lambda"]
+    )  # from MMRZ22
+    blocks_price["instARBperPoolValue"] = (
+        blocks_price["volSquared"] / 8
         * blocks_price["tradeProbability"]
         * (
             (np.exp(gamma / 2) + np.exp(-gamma / 2))
             / (2 * (1 - blocks_price["volSquared"] / (8 * blocks_price["lambda"])))
         )
-        / 8
+        / blocks_price["lambda"]
     )  # from MMR23
-    blocks_price["expFEEperPoolValue"] = (
-        blocks_price["expLVRperPoolValue"] - blocks_price["expARBperPoolValue"]
+    blocks_price["instFEEperPoolValue"] = (
+        blocks_price["instLVRperPoolValue"] - blocks_price["instARBperPoolValue"]
     )  # from MMRZ22
+
+    blocks_price["expLVRperPoolValue"] = blocks_price["instLVRperPoolValue"].cumsum()
+    blocks_price["expARBperPoolValue"] = blocks_price["instARBperPoolValue"].cumsum()
 
     ############################################################
     #                     Historical Data                      #
@@ -120,6 +125,7 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
         blocks_price, events_df, on="blockNumber", how="outer"
     )
     blocks_price_events.fillna(0, inplace=True)
+
     blocks_price_events["poolValue"] = (
         blocks_price_events["baseReserve"] * blocks_price_events["price"]
         + blocks_price_events["quoteReserve"]
@@ -162,24 +168,24 @@ def analyze_v2_data(network, dex, base_token, quote_token, fee, use_instant_vola
         )
 
     arbitrages = blocks_price_events[blocks_price_events["ARB"] > 0]
-    percentile_limit = (
+    """percentile_limit = (
         (arbitrages["LVR"] - arbitrages["FEE"])
-        / (arbitrages["expARBperPoolValue"] * arbitrages["poolValue"])
+        / (arbitrages["instARBperPoolValue"] * arbitrages["poolValue"])
     ).quantile(
         0.99
     )  # filter the outliers; mostly part of sandwich attack.
     filtered_arbitrages = arbitrages[
         (arbitrages["LVR"] - arbitrages["FEE"])
-        / (arbitrages["expARBperPoolValue"] * arbitrages["poolValue"])
+        / (arbitrages["instARBperPoolValue"] * arbitrages["poolValue"])
         <= percentile_limit
     ]
-
-    """plt.figure(figsize=(10, 6))
-    plt.scatter(filtered_arbitrages['baseFeePerGas']/filtered_arbitrages['poolValue'],(filtered_arbitrages['LVR'] - filtered_arbitrages['FEE']) / (filtered_arbitrages["expARBperPoolValue"] * filtered_arbitrages["poolValue"]))
+    
+    plt.figure(figsize=(10, 6))
+    plt.scatter(filtered_arbitrages['baseFeePerGas']/filtered_arbitrages['poolValue'],(filtered_arbitrages['LVR'] - filtered_arbitrages['FEE']) / (filtered_arbitrages["instARBperPoolValue"] * filtered_arbitrages["poolValue"]))
 
     # Label the axes
     plt.xlabel('baseFeePerGas / poolValue')
-    plt.ylabel('(LVR - FEE) / (expARBperPoolValue * poolValue)')
+    plt.ylabel('(LVR - FEE) / (instARBperPoolValue * poolValue)')
 
     # Show the plot
     plt.show()
