@@ -13,3 +13,5 @@ tests/
 data/ARBITRUM_blocks/blockNumber_timestamp_baseFeePerGas.csv
 data/MAINNET_blocks/blockNumber_timestamp_baseFeePerGas.csv
 contracts/
+results/swaps/
+results/arbitrages
