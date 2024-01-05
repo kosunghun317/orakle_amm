@@ -296,11 +296,11 @@ def v2_swaps_and_arbitrages(
 
 if __name__ == "__main__":
     network = "MAINNET"
-    dex = "UNI_V2"
+    dex = "SUSHI"
     base_token = "WETH"
-    quote_token = "USDC"
+    quote_token = "DAI"
     fee = 30  # in bps
     use_instant_volatility = True
-    (swaps, arbitrages) = v2_swaps_and_arbitrages(
+    v2_swaps_and_arbitrages(
         network, dex, base_token, quote_token, fee, use_instant_volatility
     )

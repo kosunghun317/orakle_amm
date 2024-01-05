@@ -304,9 +304,9 @@ if __name__ == "__main__":
     network = "MAINNET"
     dex = "UNI_V3"
     base_token = "WETH"
-    quote_token = "USDC"
-    fee = 30  # in bps
+    quote_token = "DAI"
+    fee = 100  # in bps
     use_instant_volatility = True
-    (swaps, arbitrages) = v3_swaps_and_arbitrages(
+    v3_swaps_and_arbitrages(
         network, dex, base_token, quote_token, fee, use_instant_volatility
     )
