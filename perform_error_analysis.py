@@ -90,62 +90,89 @@ sns.set_style("dark")
 plt.figure(figsize=(10, 6))
 
 # plot the lines
-for fee in [5, 30, 100]:
-    for quote_token in ["DAI", "USDT", "USDC"]:
+for dex, quote_token in [
+    ("CAMELOT", "USDCe"),
+    ("SUSHI", "USDC"),
+    ("SUSHI", "USDT"),
+    ("SUSHI", "DAI"),
+    ("SUSHI", "USDCe"),
+]:
         df = pd.read_csv(
-            f"results/arbitrages/MAINNET_UNI_V3_WETH_{quote_token}_{fee}bps.csv"
+            f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv"
         )
         plt.plot(
             df["timestamp"],
             df["expectedLVRperPoolValue"].cumsum(),
-            label=f"WETH-{quote_token} {fee}bps expected LVR",
+            label=f"{dex} WETH-{quote_token} 30bps expected LVR",
         )
+
+# plot the lines
+for dex, quote_token in [
+    ("CAMELOT", "USDCe"),
+    ("SUSHI", "USDC"),
+    ("SUSHI", "USDT"),
+    ("SUSHI", "DAI"),
+    ("SUSHI", "USDCe"),
+]:
+        df = pd.read_csv(
+            f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv"
+        )
+        plt.plot(df["timestamp"], df["realizedLVRperPoolValue"].cumsum(), alpha=0)
 
 # Label the axes
 plt.xlabel("timestamp")
 plt.ylabel("per unit pool value")
 plt.legend()
-plt.title("Mainnet V3: theory vs. reality")
+plt.title("ARBITRUM V2: theory vs. reality")
 
 # Save & Show the plot
-plt.savefig("results/MAINNET_UNI_V3_LVR_expected.png", dpi=300)
+plt.savefig("results/ARBITRUM_UNI_V2_LVR_expected.png", dpi=300)
 plt.show()
 
 # Create the plot
 plt.figure(figsize=(10, 6))
 
 # plot the lines
-for fee in [5, 30, 100]:
-    for quote_token in ["DAI", "USDT", "USDC"]:
+for dex, quote_token in [
+    ("CAMELOT", "USDCe"),
+    ("SUSHI", "USDC"),
+    ("SUSHI", "USDT"),
+    ("SUSHI", "DAI"),
+    ("SUSHI", "USDCe"),
+]:
         df = pd.read_csv(
-            f"results/arbitrages/MAINNET_UNI_V3_WETH_{quote_token}_{fee}bps.csv"
+            f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv"
         )
         plt.plot(
             df["timestamp"],
             df["expectedLVRperPoolValue"].cumsum(),
-            label=f"WETH-{quote_token} {fee}bps expected LVR",
-            color='grey'
+            label=f"{dex} WETH-{quote_token} 30bps expected LVR",
+            alpha=0.2,
         )
 
 # plot the lines
-for fee in [5, 30, 100]:
-    for quote_token in ["DAI", "USDT", "USDC"]:
+for dex, quote_token in [
+    ("CAMELOT", "USDCe"),
+    ("SUSHI", "USDC"),
+    ("SUSHI", "USDT"),
+    ("SUSHI", "DAI"),
+    ("SUSHI", "USDCe"),
+]:
         df = pd.read_csv(
-            f"results/arbitrages/MAINNET_UNI_V3_WETH_{quote_token}_{fee}bps.csv"
+            f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv"
         )
         plt.plot(
             df["timestamp"],
             df["realizedLVRperPoolValue"].cumsum(),
-            label=f"WETH-{quote_token} {fee}bps realized LVR",
-            color='blue'
+            label=f"{dex} WETH-{quote_token} 30bps realized LVR",
         )
 
 # Label the axes
 plt.xlabel("timestamp")
 plt.ylabel("per unit pool value")
 plt.legend()
-plt.title("Mainnet V3: theory vs. reality")
+plt.title("ARBITRUM V2: theory vs. reality")
 
 # Save & Show the plot
-plt.savefig("results/MAINNET_UNI_V3_LVR_both.png", dpi=300)
+plt.savefig("results/ARBITRUM_UNI_V2_LVR_both.png", dpi=300)
 plt.show()
