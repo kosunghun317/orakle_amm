@@ -90,22 +90,16 @@ sns.set_style("dark")
 plt.figure(figsize=(10, 6))
 
 # plot the lines
-for quote_token in ["DAI", "USDT", "USDC"]:
-    for fee in [30, 100]:
+for fee in [5, 30, 100]:
+    for quote_token in ["DAI", "USDT", "USDC"]:
         df = pd.read_csv(
             f"results/arbitrages/MAINNET_UNI_V3_WETH_{quote_token}_{fee}bps.csv"
-        )
-        plt.plot(
-            df["timestamp"],
-            df["realizedLVRperPoolValue"].cumsum(),
-            label=f"WETH-{quote_token} {fee}bps realized LVR",
         )
         plt.plot(
             df["timestamp"],
             df["expectedLVRperPoolValue"].cumsum(),
             label=f"WETH-{quote_token} {fee}bps expected LVR",
         )
-
 
 # Label the axes
 plt.xlabel("timestamp")
@@ -114,5 +108,44 @@ plt.legend()
 plt.title("Mainnet V3: theory vs. reality")
 
 # Save & Show the plot
-plt.savefig("results/MAINNET_UNI_V3_LVR_error.png", dpi=300)
+plt.savefig("results/MAINNET_UNI_V3_LVR_expected.png", dpi=300)
+plt.show()
+
+# Create the plot
+plt.figure(figsize=(10, 6))
+
+# plot the lines
+for fee in [5, 30, 100]:
+    for quote_token in ["DAI", "USDT", "USDC"]:
+        df = pd.read_csv(
+            f"results/arbitrages/MAINNET_UNI_V3_WETH_{quote_token}_{fee}bps.csv"
+        )
+        plt.plot(
+            df["timestamp"],
+            df["expectedLVRperPoolValue"].cumsum(),
+            label=f"WETH-{quote_token} {fee}bps expected LVR",
+            color='grey'
+        )
+
+# plot the lines
+for fee in [5, 30, 100]:
+    for quote_token in ["DAI", "USDT", "USDC"]:
+        df = pd.read_csv(
+            f"results/arbitrages/MAINNET_UNI_V3_WETH_{quote_token}_{fee}bps.csv"
+        )
+        plt.plot(
+            df["timestamp"],
+            df["realizedLVRperPoolValue"].cumsum(),
+            label=f"WETH-{quote_token} {fee}bps realized LVR",
+            color='blue'
+        )
+
+# Label the axes
+plt.xlabel("timestamp")
+plt.ylabel("per unit pool value")
+plt.legend()
+plt.title("Mainnet V3: theory vs. reality")
+
+# Save & Show the plot
+plt.savefig("results/MAINNET_UNI_V3_LVR_both.png", dpi=300)
 plt.show()

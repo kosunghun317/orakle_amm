@@ -301,12 +301,12 @@ def v3_swaps_and_arbitrages(
 
 
 if __name__ == "__main__":
-    network = "MAINNET"
+    network = "ARBITRUM"
     dex = "UNI_V3"
     base_token = "WETH"
-    quote_token = "DAI"
-    fee = 100  # in bps
-    use_instant_volatility = True
-    v3_swaps_and_arbitrages(
-        network, dex, base_token, quote_token, fee, use_instant_volatility
-    )
+    for quote_token in ["DAI", "USDC", "USDT"]:
+        for fee in [5, 30, 100]:
+            use_instant_volatility = True
+            v3_swaps_and_arbitrages(
+                network, dex, base_token, quote_token, fee, use_instant_volatility
+            )

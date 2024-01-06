@@ -295,12 +295,17 @@ def v2_swaps_and_arbitrages(
 
 
 if __name__ == "__main__":
-    network = "MAINNET"
-    dex = "SUSHI"
+    network = "ARBITRUM"
     base_token = "WETH"
-    quote_token = "DAI"
     fee = 30  # in bps
     use_instant_volatility = True
-    v2_swaps_and_arbitrages(
-        network, dex, base_token, quote_token, fee, use_instant_volatility
-    )
+    for dex, quote_token in [
+        ("CAMELOT", "USDCe"),
+        ("SUSHI", "USDC"),
+        ("SUSHI", "USDT"),
+        ("SUSHI", "DAI"),
+        ("SUSHI", "USDCe"),
+    ]:
+        v2_swaps_and_arbitrages(
+            network, dex, base_token, quote_token, fee, use_instant_volatility
+        )
