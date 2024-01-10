@@ -118,7 +118,7 @@ def query_v2_events(
     syncs = [
         {
             "blockNumber": from_block,
-            "logIndex": 1,
+            "logIndex": 0,
             "reserve0": Decimal(
                 pair.functions.getReserves().call(block_identifier=from_block - 1)[0]
             ),
@@ -132,10 +132,8 @@ def query_v2_events(
     print("Constructing DataFrame..")
     df_swaps = pd.DataFrame(swaps)
     df_mints_and_burns = pd.DataFrame(mints_and_burns)
-    # sync is only need for getting AMM spot price. We remain only the latest reserves within each block.
+    # We remain only the latest reserves within each block.
     df_syncs = pd.DataFrame(syncs)
-    idx = df_syncs.groupby("blockNumber")["logIndex"].idxmax()
-    df_syncs = df_syncs.loc[idx]
 
     # join them
     df = pd.merge(

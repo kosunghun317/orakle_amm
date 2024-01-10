@@ -8,78 +8,6 @@ import seaborn as sns
 from scipy.stats import pearsonr
 import statsmodels.api as sm
 
-'''
-def perform_profit_analysis(swaps):
-    """
-    fee - lvr
-
-    mu, sigma, median, correlation coefficient
-    (fee - lvr), ordersize correlation
-
-    save the stats and figures.
-    """
-    pass
-
-
-def perform_error_analysis():
-    """
-    error := real - theory.
-
-    mu, sigma, median, correlation coefficient
-
-    topic: LVR, P_trade (~= ARB / LVR)
-
-    save the stats and figures.
-    """
-    quantile_ranges = np.arange(0, 1.1, 0.1)
-    quantile_labels = [
-        "10%",
-        "20%",
-        "30%",
-        "40%",
-        "50%",
-        "60%",
-        "70%",
-        "80%",
-        "90%",
-        "100%",
-    ]
-
-    arbitrages["poolValueQuantile"] = pd.qcut(
-        arbitrages["meanPoolValue"], quantile_ranges, labels=quantile_labels
-    )
-    arbitrages["gasQuantile"] = pd.qcut(
-        arbitrages["meanBaseFeePerGas"], quantile_ranges, labels=quantile_labels
-    )
-
-    # fix pool value quantile
-
-    # fix gas quantile
-
-
-if __name__ == "__main__":
-    # read csv files
-    v3_swaps = []
-
-    for quote_token in ['DAI', 'USDT', 'USDC']:
-        for fee in [5, 30, 100]:
-            v3_swaps.append(
-                pd.read_csv(
-                    f"results/swaps/MAINNET_UNI_V3_WETH_{quote_token}_{fee}bps.csv"
-                )
-            )
-    ###################################
-    v2_swaps = []
-
-    for quote_token in ['DAI', 'USDT', 'USDC']:
-        for dex in ['UNI_V2', 'SUSHI']:
-            v2_swaps.append(
-                pd.read_csv(
-                    f"results/swaps/MAINNET_{dex}_WETH_{quote_token}_30bps.csv"
-                )
-            )
-    ###################################
-'''
 sns.set_style("dark")
 
 ############################################################
@@ -97,14 +25,12 @@ for dex, quote_token in [
     ("SUSHI", "DAI"),
     ("SUSHI", "USDCe"),
 ]:
-        df = pd.read_csv(
-            f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv"
-        )
-        plt.plot(
-            df["timestamp"],
-            df["expectedLVRperPoolValue"].cumsum(),
-            label=f"{dex} WETH-{quote_token} 30bps expected LVR",
-        )
+    df = pd.read_csv(f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv")
+    plt.plot(
+        df["timestamp"],
+        df["expectedLVRperPoolValue"].cumsum(),
+        label=f"{dex} WETH-{quote_token} 30bps expected LVR",
+    )
 
 # plot the lines
 for dex, quote_token in [
@@ -114,10 +40,8 @@ for dex, quote_token in [
     ("SUSHI", "DAI"),
     ("SUSHI", "USDCe"),
 ]:
-        df = pd.read_csv(
-            f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv"
-        )
-        plt.plot(df["timestamp"], df["realizedLVRperPoolValue"].cumsum(), alpha=0)
+    df = pd.read_csv(f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv")
+    plt.plot(df["timestamp"], df["realizedLVRperPoolValue"].cumsum(), alpha=0)
 
 # Label the axes
 plt.xlabel("timestamp")
@@ -140,15 +64,13 @@ for dex, quote_token in [
     ("SUSHI", "DAI"),
     ("SUSHI", "USDCe"),
 ]:
-        df = pd.read_csv(
-            f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv"
-        )
-        plt.plot(
-            df["timestamp"],
-            df["expectedLVRperPoolValue"].cumsum(),
-            label=f"{dex} WETH-{quote_token} 30bps expected LVR",
-            alpha=0.2,
-        )
+    df = pd.read_csv(f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv")
+    plt.plot(
+        df["timestamp"],
+        df["expectedLVRperPoolValue"].cumsum(),
+        label=f"{dex} WETH-{quote_token} 30bps expected LVR",
+        alpha=0.2,
+    )
 
 # plot the lines
 for dex, quote_token in [
@@ -158,14 +80,12 @@ for dex, quote_token in [
     ("SUSHI", "DAI"),
     ("SUSHI", "USDCe"),
 ]:
-        df = pd.read_csv(
-            f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv"
-        )
-        plt.plot(
-            df["timestamp"],
-            df["realizedLVRperPoolValue"].cumsum(),
-            label=f"{dex} WETH-{quote_token} 30bps realized LVR",
-        )
+    df = pd.read_csv(f"results/arbitrages/ARBITRUM_{dex}_WETH_{quote_token}_30bps.csv")
+    plt.plot(
+        df["timestamp"],
+        df["realizedLVRperPoolValue"].cumsum(),
+        label=f"{dex} WETH-{quote_token} 30bps realized LVR",
+    )
 
 # Label the axes
 plt.xlabel("timestamp")
