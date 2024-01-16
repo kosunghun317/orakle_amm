@@ -23,6 +23,7 @@ maturin = "^1.4.0"
 numpy = "^1.26.2"
 pyarrow = "^14.0.2"
 statsmodels = "^0.14.1"
+skfolio = "^0.0.9"
 
 
 [build-system]

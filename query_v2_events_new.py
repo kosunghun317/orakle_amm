@@ -216,8 +216,7 @@ def query_v2_events(
         | (df["baseOut"] != Decimal(0))
     ]
     final_df = pd.concat(
-        [df.iloc[:1], filtered_df],
-        ignore_index=True
+        [df.iloc[:1], filtered_df], ignore_index=True
     ).drop_duplicates()
 
     # save into csv file

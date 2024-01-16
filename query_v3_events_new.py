@@ -57,7 +57,7 @@ def query_v3_events(
                 for swap_log in swap_logs
             ]
         )
-    
+
     # TODO: add the very first row with the initial liquidity and sqrtPriceX96
 
     # create DF from list of dictionary
@@ -139,17 +139,8 @@ if __name__ == "__main__":
 
     # mainnet pools
     network = "MAINNET"
-    for fee_rate in [
-        500, 
-        3000, 
-        10000
-    ]:
-        for quote_token in [
-            "USDC", 
-            "USDT", 
-            "DAI", 
-            "WBTC"
-        ]:
+    for fee_rate in [500, 3000, 10000]:
+        for quote_token in ["USDC", "USDT", "DAI", "WBTC"]:
             print("Start!")
             start_time = time.perf_counter()
             query_v3_events(
@@ -169,18 +160,8 @@ if __name__ == "__main__":
     comment the several lines and run them separately.
     """
     network = "ARBITRUM"
-    for fee_rate in [
-        500, 
-        3000, 
-        10000
-    ]:
-        for quote_token in [
-            "USDC", 
-            "USDT", 
-            "DAI", 
-            "USDCe", 
-            "WBTC"
-        ]:
+    for fee_rate in [500, 3000, 10000]:
+        for quote_token in ["USDC", "USDT", "DAI", "USDCe", "WBTC"]:
             print("Start!")
             start_time = time.perf_counter()
             query_v3_events(
