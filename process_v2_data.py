@@ -206,7 +206,7 @@ def v2_swaps_and_arbitrages(
     predicted numbers are instantaneous RATE of LVR.
     They should be summed up in specific time interval 
     and be compared against realized value within that interval.
-    Here we set the interval 1 hour by default.
+    Here we reused the interval defined above.
     """
     df = pd.DataFrame(
         columns=[

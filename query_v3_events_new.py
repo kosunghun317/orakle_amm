@@ -36,7 +36,20 @@ def query_v3_events(
     # query the events
     print(f"Querying the events on address {pool.address} ..")
     chunk_size = 1800
-    swaps = []
+    swaps = [
+        {
+            "blockNumber": from_block,
+            "logIndex": 0,
+            "amount0": Decimal(0),
+            "amount1": Decimal(0),
+            "sqrtPriceX96": Decimal(
+                pool.functions.slot0().call(block_identifier=from_block)[0]
+            ),
+            "liquidity": Decimal(
+                pool.functions.liquidity().call(block_identifier=from_block)
+            ),
+        }
+    ]
     for block_number in range(from_block, to_block, chunk_size):
         chunk_end = min(block_number + chunk_size, to_block) - 1
         time.sleep(0.1)
@@ -57,8 +70,6 @@ def query_v3_events(
                 for swap_log in swap_logs
             ]
         )
-
-    # TODO: add the very first row with the initial liquidity and sqrtPriceX96
 
     # create DF from list of dictionary
     print("Constructing DataFrame..")

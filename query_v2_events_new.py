@@ -242,13 +242,13 @@ if __name__ == "__main__":
         ("MAINNET", "UNI_V2", "WETH", "DAI"),
         ("MAINNET", "UNI_V2", "WETH", "WBTC"),
         # arbitrum pairs
-        # ("ARBITRUM", "CAMELOT", "WETH", "USDCe"),
-        # ("ARBITRUM", "CAMELOT", "WETH", "WBTC"),
-        # ("ARBITRUM", "SUSHI", "WETH", "USDC"),
-        # ("ARBITRUM", "SUSHI", "WETH", "USDT"),
-        # ("ARBITRUM", "SUSHI", "WETH", "DAI"),
-        # ("ARBITRUM", "SUSHI", "WETH", "USDCe"),
-        # ("ARBITRUM", "SUSHI", "WETH", "WBTC"),
+        ("ARBITRUM", "CAMELOT", "WETH", "USDCe"),
+        ("ARBITRUM", "CAMELOT", "WETH", "WBTC"),
+        ("ARBITRUM", "SUSHI", "WETH", "USDC"),
+        ("ARBITRUM", "SUSHI", "WETH", "USDT"),
+        ("ARBITRUM", "SUSHI", "WETH", "DAI"),
+        ("ARBITRUM", "SUSHI", "WETH", "USDCe"),
+        ("ARBITRUM", "SUSHI", "WETH", "WBTC"),
     ]:
         print("Start!")
         start_time = time.perf_counter()

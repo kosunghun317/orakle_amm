@@ -62,31 +62,19 @@ def v2_swaps_and_arbitrages(
         cex_price_df["price"]
         / cex_price_df["price"].shift(interval).fillna(cex_price_df["price"][0])
     )  # logarithmic return
+
     if use_instant_volatility:
         """
         Instantaneous volatility from return.
         For the derivation see http://dx.doi.org/10.3905/jpm.1994.409478
         """
-        cex_price_df["volSquared"] = (
-            2
-            * (
-                cex_price_df["return"] - cex_price_df["logReturn"]
-            )  # difference in arithmetic and logarithmic return
-            * 60
-            * 60
-            * 24
-            / interval
-        )  # converted into daily timeframe.
+        cex_price_df["volSquared"] = 2 * (
+            cex_price_df["return"] - cex_price_df["logReturn"]
+        )  # difference in arithmetic and logarithmic return
     else:
         """
         Rolling volatility from logarithmic return.
-        We use rolling window. Can be freely modified.
-
-        TODO: completely rewrite this part.
-        We first get logarithmic (interval) return,
-        then rollover (window) samples with step size being (interval).
-        We don't want the std of 1-hour returns from 00:00:00 to 00:00:23.
-        Instead we want the std of 1-hour returns from 00:00:00 to 23:00:00.
+        We rollover (window) samples with step size being (interval).
         """
         cex_price_df["modulus"] = (
             cex_price_df["timestamp"] - cex_price_df["timestamp"].min()
@@ -108,14 +96,12 @@ def v2_swaps_and_arbitrages(
                 )
 
             # j = 1: we use instantaneous volatility
-            cex_price_df.loc[i, "volSquared"] = (
-                2
-                * (cex_price_df.loc[i, "return"] - cex_price_df.loc[i, "logReturn"])
-                * 60
-                * 60
-                * 24
-                / interval
+            cex_price_df.loc[i, "volSquared"] = 2 * (
+                cex_price_df.loc[i, "return"] - cex_price_df.loc[i, "logReturn"]
             )
+    cex_price_df["volSquared"] *= (
+        60 * 60 * 24 / interval
+    )  # convert into daily timeframe.
 
     cex_price_df.fillna(0, inplace=True)
 
@@ -139,7 +125,7 @@ def v2_swaps_and_arbitrages(
 
     blocks_price["LVRperPoolValueRate"] = (
         blocks_price["volSquared"] / 8 / blocks_price["lambda"]
-    )  # from MMRZ22
+    )  # from MMRZ22, multiplied by avg block time (= inverse of lambda)
     blocks_price["ARBperPoolValueRate"] = (
         blocks_price["volSquared"]
         / 8
@@ -149,7 +135,7 @@ def v2_swaps_and_arbitrages(
             / (2 * (1 - blocks_price["volSquared"] / (8 * blocks_price["lambda"])))
         )
         / blocks_price["lambda"]
-    )  # from MMR23
+    )  # from MMR23, multiplied by avg block time (= inverse of lambda)
 
     blocks_price["expLVRperPoolValue"] = blocks_price["LVRperPoolValueRate"].cumsum()
     blocks_price["expARBperPoolValue"] = blocks_price["ARBperPoolValueRate"].cumsum()
@@ -159,15 +145,26 @@ def v2_swaps_and_arbitrages(
     ############################################################
 
     blocks_price_events = pd.merge(
-        blocks_price, events_df, on="blockNumber", how="outer"
+        blocks_price, events_df, on="blockNumber", how="left"
     )
+
+    # fill the missing values of blocks without swaps
+    # forward fill
+    blocks_price_events["totalSupply"].ffill(inplace=True)
+    blocks_price_events["baseReserve"].ffill(inplace=True)
+    blocks_price_events["quoteReserve"].ffill(inplace=True)
+    # backward fill
+    blocks_price_events["totalSupply"].bfill(inplace=True)
+    blocks_price_events["baseReserve"].bfill(inplace=True)
+    blocks_price_events["quoteReserve"].bfill(inplace=True)
+    # empty swap values are filled with 0
     blocks_price_events.fillna(0, inplace=True)
 
     blocks_price_events["poolValue"] = 2 * np.sqrt(
         blocks_price_events["quoteReserve"]
         * blocks_price_events["baseReserve"]
         * blocks_price_events["price"]
-    )  # immune to flashloan and sandwich attack
+    )  # this is immune to pool value manipulation from flashloan and sandwich attack
     blocks_price_events["LVR"] = -(10000 - fee) / 10000 * (
         blocks_price_events["baseIn"] * blocks_price_events["price"]
         + blocks_price_events["quoteIn"]
@@ -204,3 +201,7 @@ def v2_swaps_and_arbitrages(
             - blocks_price_events["FEE"]
             - blocks_price_events["baseFeePerGas"] * 140000 / 10**18
         )
+
+    ############################################################
+    #                      Process data                        #
+    ############################################################
