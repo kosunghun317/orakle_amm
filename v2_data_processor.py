@@ -205,3 +205,86 @@ def v2_swaps_and_arbitrages(
     ############################################################
     #                      Process data                        #
     ############################################################
+    """
+    entire swap record for profit analysis. This contains retail orderflow too.
+    """
+    swaps = blocks_price_events[blocks_price_events["FEE"] > 0]
+    swaps["swapSize"] = swaps["baseIn"] * swaps["price"] + swaps["quoteIn"]
+
+    """
+    arbitrage-only record. This is for error analysis between theory and real.
+    """
+    total_arb_per_block = blocks_price_events.groupby("blockNumber").sum()["ARB"]
+    mask = blocks_price_events["blockNumber"].isin(
+        list(total_arb_per_block[total_arb_per_block > 0.0].index)
+    )
+    arbitrages = blocks_price_events[mask]
+
+    df = pd.DataFrame(
+        columns=[
+            "timestamp",
+            "meanVolSquared",
+            "meanPoolValue",
+            "meanBaseFeePerGas",
+            "expectedLVRperPoolValue",  # for error analysis
+            "realizedLVRperPoolValue",  # for error analysis
+            "expectedARBperPoolValue",  # for error analysis
+            "realizedARBperPoolValueWithoutGas",  # for error analysis
+            "realizedARBperPoolValueWithGas",  # for error analysis
+        ]
+    )
+
+    start_time = int(datetime(2023, 10, 1, tzinfo=timezone.utc).timestamp())
+    end_time = int(datetime(2023, 12, 1, tzinfo=timezone.utc).timestamp())
+
+    while start_time < end_time:
+        blocks_price_events_in_interval = blocks_price_events[
+            (start_time <= blocks_price_events["timestamp"])
+            & (blocks_price_events["timestamp"] < start_time + interval)
+        ]
+        arbitrages_in_interval = arbitrages[
+            (start_time <= arbitrages["timestamp"])
+            & (arbitrages["timestamp"] < start_time + interval)
+        ]
+
+        new_row = pd.DataFrame(
+            [
+                [
+                    start_time,
+                    blocks_price_events_in_interval["volSquared"].mean(),
+                    blocks_price_events_in_interval["poolValue"].mean(),
+                    blocks_price_events_in_interval["baseFeePerGas"].mean(),
+                    blocks_price_events_in_interval["LVRperPoolValueRate"].sum(),
+                    (
+                        arbitrages_in_interval["LVR"]
+                        / arbitrages_in_interval["poolValue"]
+                    ).sum(),
+                    blocks_price_events_in_interval["ARBperPoolValueRate"].sum(),
+                    (
+                        (arbitrages_in_interval["LVR"] - arbitrages_in_interval["FEE"])
+                        / arbitrages_in_interval["poolValue"]
+                    ).sum(),
+                    (
+                        arbitrages_in_interval["ARB"]
+                        / arbitrages_in_interval["poolValue"]
+                    ).sum(),
+                ]
+            ],
+            columns=[
+                "timestamp",
+                "meanVolSquared",
+                "meanPoolValue",
+                "meanBaseFeePerGas",
+                "expectedLVRperPoolValue",
+                "realizedLVRperPoolValue",
+                "expectedARBperPoolValue",
+                "realizedARBperPoolValueWithoutGas",
+                "realizedARBperPoolValueWithGas",
+            ],
+        )
+
+        df = pd.concat([df, new_row], ignore_index=True)
+
+        start_time += interval
+
+    return (swaps, df)
