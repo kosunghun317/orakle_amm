@@ -208,7 +208,7 @@ def v2_swaps_and_arbitrages(
     """
     entire swap record for profit analysis. This contains retail orderflow too.
     """
-    swaps = blocks_price_events[blocks_price_events["FEE"] > 0]
+    swaps = blocks_price_events[blocks_price_events["FEE"] > 0].copy()
     swaps["swapSize"] = swaps["baseIn"] * swaps["price"] + swaps["quoteIn"]
 
     """
